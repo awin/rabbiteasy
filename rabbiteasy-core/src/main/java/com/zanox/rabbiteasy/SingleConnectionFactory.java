@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * <p>A single connection factory provides ONE SINGLE connection to a 
@@ -57,6 +58,7 @@ public class SingleConnectionFactory extends ConnectionFactory {
     List<ConnectionListener> connectionListeners;
     volatile Connection connection;
     volatile State state = State.NEVER_CONNECTED;
+    private ExecutorService executorService;
 
     private final Object operationOnConnectionMonitor = new Object();
 
@@ -151,6 +153,34 @@ public class SingleConnectionFactory extends ConnectionFactory {
     }
 
     /**
+     * Sets an {@code ExecutorService} to be used for this connection.
+     * If none is set a default one will be used (currently 5 threads).
+     * Consuming of messages happens using this {@code ExecutorService}.
+     * <p/>
+     * Because we don't create a new connection to RabbitMQ every time {@link #newConnection()}
+     * is called changing the {@code ExecutorService} would only take effect
+     * when the underlying connection is closed.
+     * <p/>
+     * That is why the {@code ExecutorService} can only be set once.
+     * Every further invocation will result in an {@link IllegalStateException}.
+     *
+     * @param executorService to use for consuming messages
+     */
+    public void setExecutorService(ExecutorService executorService) {
+        if (this.executorService != null) {
+            throw new IllegalStateException("ExecutorService already set, trying to change it");
+        }
+        this.executorService = executorService;
+    }
+
+    /**
+     * @return the {@code ExecutorService} to use
+     */
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    /**
      * Changes the factory state and notifies all connection listeners.
      *
      * @param newState The new connection factory state
@@ -197,7 +227,7 @@ public class SingleConnectionFactory extends ConnectionFactory {
             }
             try {
                 LOGGER.info("Trying to establish connection to {}:{}", getHost(), getPort());
-                connection = super.newConnection();
+                connection = super.newConnection(executorService);
                 connection.addShutdownListener(connectionShutdownListener);
                 LOGGER.info("Established connection to {}:{}", getHost(), getPort());
                 changeState(State.CONNECTED);
