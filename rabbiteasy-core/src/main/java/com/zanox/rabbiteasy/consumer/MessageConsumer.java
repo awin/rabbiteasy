@@ -109,6 +109,7 @@ public abstract class MessageConsumer extends ConsumerContainer.ManagedConsumer 
      * messages manually the acknowledgment is handled by the super class.
      * It is sent automatically after this method returned without
      * throwing and exception. In case the method throws an exception,
+     * a negative acknowledgment will be sent.
      * </p>
      * 
      * @param message The delivered message
