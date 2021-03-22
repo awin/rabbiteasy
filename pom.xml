@@ -48,7 +48,7 @@
     </modules>
 
     <properties>
-        <rabbit.client.version>2.8.7</rabbit.client.version>
+        <rabbit.client.version>4.8.0</rabbit.client.version>
         <slf4j.version>1.6.6</slf4j.version>
         <junit.version>4.10</junit.version>
         <easymock.version>3.1</easymock.version>
